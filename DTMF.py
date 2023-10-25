@@ -183,7 +183,8 @@ def analizar_audio_dtmf(archivo_audio):
         samplerate, data = wavfile.read(file)
 
     # Definir la duración de cada segmento de tiempo en segundos
-    duracion_segmento = 1.37
+    # duracion_segmento = 1.37
+    # duracion_segmento = 1
     # duracion_segmento = 0.301
 
     # Dividir el archivo de audio en segmentos de tiempo y analizar cada uno
@@ -226,4 +227,66 @@ def analizar_audio_dtmf(archivo_audio):
 # Llama a la función con el archivo de audio
 # analizar_audio_dtmf("Dtmf_total.wav")
 # analizar_audio_dtmf("Dtmf1_2.wav")
-analizar_audio_dtmf("Dtmf_322.wav")
+# analizar_audio_dtmf("Dtmf_322.wav")
+# analizar_audio_dtmf("202310251628.wav")
+
+
+
+def grabar_audio_en_tiempo_real(nombre_archivo):
+    import pyaudio
+    import wave
+    """
+    Graba audio en tiempo real y lo guarda en un archivo WAV.
+
+    Args:
+        nombre_archivo (str): El nombre del archivo WAV en el que se guardará la grabación.
+
+    Returns:
+        None
+    """
+    # Configuración de la grabación
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 1  # Para audio mono, 2 para estéreo
+    RATE = 44100  # Tasa de muestreo en Hz (puedes ajustarla según tus necesidades)
+    CHUNK = 1024  # Tamaño del búfer para la grabación (puedes ajustarlo según tus necesidades)
+
+    # Inicializar PyAudio
+    p = pyaudio.PyAudio()
+
+    # Abrir un flujo de audio para la captura
+    stream = p.open(format=FORMAT,
+                    channels=CHANNELS,
+                    rate=RATE,
+                    input=True,
+                    frames_per_buffer=CHUNK)
+
+    print("Grabando...")
+
+    frames = []  # Aquí se almacenarán los datos de audio
+
+    try:
+        while True:
+            data = stream.read(CHUNK)
+            frames.append(data)
+    except KeyboardInterrupt:
+        print("Grabación detenida.")
+
+    # Detener el flujo de audio
+    stream.stop_stream()
+    stream.close()
+
+    # Terminar PyAudio
+    p.terminate()
+
+    # Guardar los datos de audio en un archivo WAV
+    wf = wave.open(nombre_archivo, "wb")
+    wf.setnchannels(CHANNELS)
+    wf.setsampwidth(p.get_sample_size(FORMAT))
+    wf.setframerate(RATE)
+    wf.writeframes(b"".join(frames))
+    wf.close()
+
+    print(f"La grabación se ha guardado en {nombre_archivo}")
+
+
+grabar_audio_en_tiempo_real('prueba.wav')
