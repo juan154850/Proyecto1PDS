@@ -67,16 +67,16 @@ def obtener_frecuencias(file_name):
     print("Las tres frecuencias principales son:", frequencies_hz)
 
     # Graficar el espectro
-    freqs = np.fft.rfftfreq(len(filtered_data), 1 / samplerate)
-    plt.plot(freqs, abs_fft)
-    plt.title("Spectrum")
-    plt.xlabel("Frequency (Hz)")
-    plt.ylabel("Magnitude")
-    plt.grid()
-    # poner un punto en cada frecuencia principal
-    for f in frequencies_hz:
-        plt.plot(f, abs_fft[int(f * len(filtered_data) / samplerate)], "ro")
-    plt.show()
+    # freqs = np.fft.rfftfreq(len(filtered_data), 1 / samplerate)
+    # plt.plot(freqs, abs_fft)
+    # plt.title("Spectrum")
+    # plt.xlabel("Frequency (Hz)")
+    # plt.ylabel("Magnitude")
+    # plt.grid()
+    # # poner un punto en cada frecuencia principal
+    # for f in frequencies_hz:
+    #     plt.plot(f, abs_fft[int(f * len(filtered_data) / samplerate)], "ro")
+    # plt.show()
 
     return frequencies_hz
 
@@ -84,6 +84,7 @@ def obtener_frecuencias(file_name):
 def generar_tono_dtmf(archivo_wav, output_file_name):
     import soundfile as sf
     import numpy as np
+
     # Obtener las dos frecuencias de la DTMF
     frecuencias = obtener_frecuencias(archivo_wav)
     frecuencia1 = frecuencias[0]
@@ -112,15 +113,18 @@ def generar_tono_dtmf(archivo_wav, output_file_name):
     # Guardar el tono completo como un archivo WAV
     sf.write(output_file_name, tono_completo, samplerate)
 
+
 # generar_tono_dtmf('Dtmf1.wav', 'tono_1.wav')
 # generar_tono_dtmf('Dtmf2.wav', 'tono_2.wav')
 # generar_tono_dtmf('Dtmf3.wav', 'tono_3.wav')
 # generar_tono_dtmf('Dtmf4.wav', 'tono_4.wav')
 # generar_tono_dtmf('Dtmf5.wav', 'tono_5.wav')
 
+
 def obtener_numero_presionado(archivo_wav):
     import numpy as np
     from scipy.io import wavfile
+
     # Obtener las dos frecuencias del tono DTMF
     samplerate, data = wavfile.read(archivo_wav)
     frecuencias = np.array(obtener_frecuencias(archivo_wav))
@@ -159,5 +163,65 @@ def obtener_numero_presionado(archivo_wav):
     # Si no se encontraron dos frecuencias, devolver None
     return None
 
-numero = obtener_numero_presionado('tono_5.wav')
-print(numero)
+
+# numero = obtener_numero_presionado('tono_5.wav')
+# print(numero)
+
+
+def analizar_audio_dtmf(archivo_audio):
+    import os
+    from scipy.io import wavfile
+    import shutil
+
+    # Crear la carpeta "temp" si no existe
+    temp_folder = "temp"
+    if not os.path.exists(temp_folder):
+        os.mkdir(temp_folder)
+
+    # Cargar el archivo de audio completo
+    with open(archivo_audio, "rb") as file:
+        samplerate, data = wavfile.read(file)
+
+    # Definir la duración de cada segmento de tiempo en segundos
+    duracion_segmento = 1.38
+
+    # Dividir el archivo de audio en segmentos de tiempo y analizar cada uno
+    numeros_presionados = []
+    for i in range(0, len(data), int(samplerate * duracion_segmento)):
+        segmento = data[i : i + int(samplerate * duracion_segmento)]
+
+        # Crear un archivo temporal para el segmento en la carpeta "temp"
+        temp_filename = os.path.join(
+            temp_folder, f"segmento_{i // int(samplerate * duracion_segmento)}.wav"
+        )
+        wavfile.write(temp_filename, samplerate, segmento)
+
+        # Analizar el archivo temporal
+        numero_presionado = obtener_numero_presionado(temp_filename)
+
+        if numero_presionado is not None:
+            numeros_presionados.append(numero_presionado)
+
+    # Imprimir los números que se presionaron en la consola
+    if len(numeros_presionados) > 0:
+        print("Se presionaron los números:", ", ".join(numeros_presionados))
+    else:
+        print("No se detectó ningún número DTMF en el archivo de audio.")
+
+    # Eliminar los archivos temporales
+    for file in os.listdir(temp_folder):
+        file_path = os.path.join(temp_folder, file)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+        except Exception as e:
+            print(f"Error al eliminar el archivo {file_path}: {e}")
+
+    # Eliminar la carpeta "temp" si está vacía
+    if not os.listdir(temp_folder):
+        os.rmdir(temp_folder)
+
+
+# Llama a la función con el archivo de audio
+# analizar_audio_dtmf("Dtmf_total.wav")
+analizar_audio_dtmf("Dtmf1_2.wav")
