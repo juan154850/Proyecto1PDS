@@ -183,7 +183,8 @@ def analizar_audio_dtmf(archivo_audio):
         samplerate, data = wavfile.read(file)
 
     # Definir la duración de cada segmento de tiempo en segundos
-    duracion_segmento = 1.38
+    duracion_segmento = 1.37
+    # duracion_segmento = 0.301
 
     # Dividir el archivo de audio en segmentos de tiempo y analizar cada uno
     numeros_presionados = []
@@ -224,4 +225,5 @@ def analizar_audio_dtmf(archivo_audio):
 
 # Llama a la función con el archivo de audio
 # analizar_audio_dtmf("Dtmf_total.wav")
-analizar_audio_dtmf("Dtmf1_2.wav")
+# analizar_audio_dtmf("Dtmf1_2.wav")
+analizar_audio_dtmf("Dtmf_322.wav")
