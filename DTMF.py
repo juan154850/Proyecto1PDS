@@ -1,47 +1,79 @@
-import numpy as np
-from scipy.io import wavfile
+def generar_audio(frec):
+    import numpy as np
+    from scipy.io import wavfile
 
-# Cargar el archivo de audio
-audio_file = 'tu_archivo_de_audio.wav'
-fs, x = wavfile.read(audio_file)
+    # Configuración del tono
+    frecuencia = frec  # Frecuencia en Hz
+    duracion = 1  # Duración en segundos
+    amplitud = 0.5  # Amplitud del tono
 
-# Diseñar los filtros para las frecuencias DTMF
-f1 = [697, 770, 852, 941]
-f2 = [1209, 1336, 1477]
-dtmf = f1 + f2
+    # Crear un vector de tiempo
+    tiempo = np.linspace(
+        0, duracion, int(44100 * duracion), endpoint=False
+    )  # 44.1 kHz de muestreo
 
-# Inicializar matrices para almacenar las amplitudes de las frecuencias DTMF
-amplitudes_f1 = np.zeros(len(dtmf))
-amplitudes_f2 = np.zeros(len(dtmf))
+    # Generar el tono
+    tono = amplitud * np.sin(2 * np.pi * frecuencia * tiempo)
 
-# Calcular la DFT de la señal de audio
-X = np.fft.fft(x)
-N = len(x)
-frequencies = np.arange(N) * (fs / N)
+    # Guardar el tono como un archivo WAV
+    nombre_archivo = "1.wav"
+    wavfile.write(nombre_archivo, 44100, tono.astype(np.float32))
 
-# Calcular las amplitudes de las frecuencias DTMF
-for i in range(len(dtmf)):
-    f1_freq = dtmf[i]
-    f2_freq = dtmf[i + len(f1)]
+    print(f"Tono de {frecuencia} Hz guardado como {nombre_archivo}")
 
-    index_f1 = np.argmin(np.abs(frequencies - f1_freq))
-    index_f2 = np.argmin(np.abs(frequencies - f2_freq))
 
-    amplitudes_f1[i] = np.abs(X[index_f1])
-    amplitudes_f2[i] = np.abs(X[index_f2])
+def obtener_frecuencias():
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from scipy.io import wavfile
+    from scipy.signal import butter, lfilter
 
-# Encontrar las frecuencias DTMF dominantes
-threshold = 0.2  # Ajusta este valor según tus necesidades
-max_amplitude_f1 = max(amplitudes_f1)
-max_amplitude_f2 = max(amplitudes_f2)
-dominant_f1 = [i for i, amplitude in enumerate(amplitudes_f1) if amplitude > threshold * max_amplitude_f1]
-dominant_f2 = [i for i, amplitude in enumerate(amplitudes_f2) if amplitude > threshold * max_amplitude_f2]
+    # Función para crear un filtro pasabajas
+    def butter_lowpass(cutoff, fs, order=5):
+        nyq = 0.5 * fs
+        normal_cutoff = cutoff / nyq
+        b, a = butter(order, normal_cutoff, btype="low", analog=False)
+        return b, a
 
-# Mapear las frecuencias dominantes a dígitos
-dtmf_symbols = [['1', '2', '3', 'A'], ['4', '5', '6', 'B'], ['7', '8', '9', 'C'], ['*', '0', '#', 'D']]
+    # Función para aplicar el filtro pasabajas a los datos
+    def butter_lowpass_filter(data, cutoff, fs, order=5):
+        b, a = butter_lowpass(cutoff, fs, order=order)
+        y = lfilter(b, a, data)
+        return y
 
-if dominant_f1 and dominant_f2:
-    detected_digit = dtmf_symbols[dominant_f2[0]][dominant_f1[0]]
-    print(f'El dígito detectado es: {detected_digit}')
-else:
-    print('No se detectó ninguna señal DTMF.')
+    # Cargar archivo de audio
+    samplerate, data = wavfile.read("audio.wav")
+
+    # Convertir a mono si es estéreo
+    if len(data.shape) > 1:
+        data = np.mean(data, axis=1)
+
+    # Aplicar filtro pasabajas
+    cutoff = 1000  # Frecuencia de corte en Hz
+    filtered_data = butter_lowpass_filter(data, cutoff, samplerate)
+
+    # Obtener la transformada de Fourier
+    fft_out = np.fft.rfft(filtered_data)
+
+    # Obtener las frecuencias absolutas
+    abs_fft = np.abs(fft_out)
+
+    # Encontrar las 3 frecuencias más altas
+    frequencies = np.argsort(abs_fft)[-3:]
+
+    # Escalar las frecuencias para obtenerlas en Hz
+    frequencies_hz = frequencies * samplerate / len(filtered_data)
+
+    print("Las tres frecuencias principales son:", frequencies_hz)
+
+    # Graficar el espectro
+    freqs = np.fft.rfftfreq(len(filtered_data), 1 / samplerate)
+    plt.plot(freqs, abs_fft)
+    plt.title("Spectrum")
+    plt.xlabel("Frequency (Hz)")
+    plt.ylabel("Magnitude")
+    plt.show()
+
+
+# obtener_frecuencias()
+generar_audio(frec=696.70834749)
