@@ -114,13 +114,6 @@ def generar_tono_dtmf(archivo_wav, output_file_name):
     sf.write(output_file_name, tono_completo, samplerate)
 
 
-# generar_tono_dtmf('Dtmf1.wav', 'tono_1.wav')
-# generar_tono_dtmf('Dtmf2.wav', 'tono_2.wav')
-# generar_tono_dtmf('Dtmf3.wav', 'tono_3.wav')
-# generar_tono_dtmf('Dtmf4.wav', 'tono_4.wav')
-# generar_tono_dtmf('Dtmf5.wav', 'tono_5.wav')
-
-
 def obtener_numero_presionado(archivo_wav):
     import numpy as np
     from scipy.io import wavfile
@@ -164,14 +157,9 @@ def obtener_numero_presionado(archivo_wav):
     return None
 
 
-# numero = obtener_numero_presionado('tono_5.wav')
-# print(numero)
-
-
-def analizar_audio_dtmf(archivo_audio):
+def analizar_audio_dtmf(archivo_audio, duracion_segmento):
     import os
     from scipy.io import wavfile
-    import shutil
 
     # Crear la carpeta "temp" si no existe
     temp_folder = "temp"
@@ -182,10 +170,16 @@ def analizar_audio_dtmf(archivo_audio):
     with open(archivo_audio, "rb") as file:
         samplerate, data = wavfile.read(file)
 
+
+
+    # Señal en el tiempo
+    # visualizar_audio(archivo_audio=archivo_audio)    
+
+    # Espectro
+    # visualizar_espectro(archivo_audio=archivo_audio)
+
     # Definir la duración de cada segmento de tiempo en segundos
-    # duracion_segmento = 1.37
-    # duracion_segmento = 1
-    # duracion_segmento = 0.301
+    duracion_segmento = duracion_segmento
 
     # Dividir el archivo de audio en segmentos de tiempo y analizar cada uno
     numeros_presionados = []
@@ -224,69 +218,46 @@ def analizar_audio_dtmf(archivo_audio):
         os.rmdir(temp_folder)
 
 
-# Llama a la función con el archivo de audio
-# analizar_audio_dtmf("Dtmf_total.wav")
-# analizar_audio_dtmf("Dtmf1_2.wav")
-# analizar_audio_dtmf("Dtmf_322.wav")
-# analizar_audio_dtmf("202310251628.wav")
+def visualizar_espectro(archivo_audio):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import librosa
+    # Cargar el archivo de audio
+    y, sr = librosa.load(archivo_audio)
+
+    # Calcular la transformada de Fourier del audio
+    Y = np.fft.fft(y)
+
+    # Obtener el valor absoluto de la transformada
+    Y_abs = np.abs(Y)
+
+    # Crear el gráfico del espectro en frecuencia
+    plt.figure(figsize=(14, 5))
+    plt.plot(np.linspace(0, sr, len(Y_abs)), Y_abs)
+    plt.xlabel("Frecuencia (Hz)")
+    plt.ylabel("Amplitud")
+    plt.title("Espectro en frecuencia completo")
+    plt.show()
 
 
+def visualizar_audio(archivo_audio):
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from scipy.io.wavfile import read
 
-def grabar_audio_en_tiempo_real(nombre_archivo):
-    import pyaudio
-    import wave
-    """
-    Graba audio en tiempo real y lo guarda en un archivo WAV.
+    file_audio=(archivo_audio)
+    fs,x=read(file_audio)
+    # filtrar solo los valores de amplitud mayores a 12k
+    time=np.arange(0,len(x)/fs,1.0/fs)    
 
-    Args:
-        nombre_archivo (str): El nombre del archivo WAV en el que se guardará la grabación.
+    # Graficar la forma de onda de audio
+    plt.figure(figsize=(15, 5))
+    plt.plot(time, x)
+    plt.title("Forma de Onda de Audio")
+    plt.xlabel("Tiempo (s)")
+    plt.ylabel("Amplitud")
+    plt.grid()
+    plt.show()
 
-    Returns:
-        None
-    """
-    # Configuración de la grabación
-    FORMAT = pyaudio.paInt16
-    CHANNELS = 1  # Para audio mono, 2 para estéreo
-    RATE = 44100  # Tasa de muestreo en Hz (puedes ajustarla según tus necesidades)
-    CHUNK = 1024  # Tamaño del búfer para la grabación (puedes ajustarlo según tus necesidades)
-
-    # Inicializar PyAudio
-    p = pyaudio.PyAudio()
-
-    # Abrir un flujo de audio para la captura
-    stream = p.open(format=FORMAT,
-                    channels=CHANNELS,
-                    rate=RATE,
-                    input=True,
-                    frames_per_buffer=CHUNK)
-
-    print("Grabando...")
-
-    frames = []  # Aquí se almacenarán los datos de audio
-
-    try:
-        while True:
-            data = stream.read(CHUNK)
-            frames.append(data)
-    except KeyboardInterrupt:
-        print("Grabación detenida.")
-
-    # Detener el flujo de audio
-    stream.stop_stream()
-    stream.close()
-
-    # Terminar PyAudio
-    p.terminate()
-
-    # Guardar los datos de audio en un archivo WAV
-    wf = wave.open(nombre_archivo, "wb")
-    wf.setnchannels(CHANNELS)
-    wf.setsampwidth(p.get_sample_size(FORMAT))
-    wf.setframerate(RATE)
-    wf.writeframes(b"".join(frames))
-    wf.close()
-
-    print(f"La grabación se ha guardado en {nombre_archivo}")
-
-
-grabar_audio_en_tiempo_real('prueba.wav')
+# analizar_audio_dtmf("harold.wav", 1.4)
+analizar_audio_dtmf("juanb.wav", 1.3)
