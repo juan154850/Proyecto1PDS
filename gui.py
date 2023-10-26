@@ -40,7 +40,7 @@ class GUI:
         self.analyze_button = ttk.Button(self.window, text="Analizar", command=self.analyze_audio_file, state=tk.DISABLED, style="Custom.TButton")
         self.analyze_button.pack(pady=10)
         
-        self.param_label = ttk.Label(self.window, text="Segundo parámetro:", font=("Helvetica", 12))
+        self.param_label = ttk.Label(self.window, text="Segmentacion:", font=("Helvetica", 12))
         self.param_label.pack(pady=10)
         
         self.param_entry = ttk.Entry(self.window, font=("Helvetica", 12))
