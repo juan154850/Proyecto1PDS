@@ -1,7 +1,25 @@
-def generar_audio(frec, file_name):
-    import numpy as np
-    from scipy.io import wavfile
+import os
+import gui
+import librosa
+import numpy as np
+import soundfile as sf
+from scipy.io import wavfile
+import matplotlib.pyplot as plt
+from scipy.io.wavfile import read
+from scipy.signal import butter, lfilter
 
+
+def generar_audio(frec: float, file_name: str) -> None:
+    """
+    Genera un tono de frecuencia dada y lo guarda como un archivo WAV.
+
+    Args:
+        frec (float): Frecuencia del tono en Hz.
+        file_name (str): Nombre del archivo WAV a guardar.
+
+    Returns:
+        None
+    """
     # Configuración del tono
     frecuencia = frec  # Frecuencia en Hz
     duracion = 1  # Duración en segundos
@@ -22,12 +40,16 @@ def generar_audio(frec, file_name):
     print(f"Tono de {frecuencia} Hz guardado como {nombre_archivo}")
 
 
-def obtener_frecuencias(file_name):
-    import numpy as np
-    import matplotlib.pyplot as plt
-    from scipy.io import wavfile
-    from scipy.signal import butter, lfilter
+def obtener_frecuencias(file_name: str) -> np.ndarray:
+    """
+    Obtiene las dos frecuencias más altas de un archivo de audio.
 
+    Args:
+        file_name (str): Nombre del archivo de audio.
+
+    Returns:
+        np.ndarray: Un arreglo de NumPy con las dos frecuencias más altas en Hz.
+    """
     # Función para crear un filtro pasabajas
     def butter_lowpass(cutoff, fs, order=5):
         nyq = 0.5 * fs
@@ -58,33 +80,26 @@ def obtener_frecuencias(file_name):
     # Obtener las frecuencias absolutas
     abs_fft = np.abs(fft_out)
 
-    # Encontrar las 3 frecuencias más altas
+    # Encontrar las 2 frecuencias más altas
     frequencies = np.argsort(abs_fft)[-2:]
 
     # Escalar las frecuencias para obtenerlas en Hz
     frequencies_hz = frequencies * samplerate / len(filtered_data)
 
-    print("Las tres frecuencias principales son:", frequencies_hz)
-
-    # Graficar el espectro
-    # freqs = np.fft.rfftfreq(len(filtered_data), 1 / samplerate)
-    # plt.plot(freqs, abs_fft)
-    # plt.title("Spectrum")
-    # plt.xlabel("Frequency (Hz)")
-    # plt.ylabel("Magnitude")
-    # plt.grid()
-    # # poner un punto en cada frecuencia principal
-    # for f in frequencies_hz:
-    #     plt.plot(f, abs_fft[int(f * len(filtered_data) / samplerate)], "ro")
-    # plt.show()
-
     return frequencies_hz
 
 
-def generar_tono_dtmf(archivo_wav, output_file_name):
-    import soundfile as sf
-    import numpy as np
+def generar_tono_dtmf(archivo_wav: str, output_file_name: str) -> None:
+    """
+    Genera un tono DTMF a partir de un archivo de audio y lo guarda como un archivo WAV.
 
+    Args:
+        archivo_wav (str): Nombre del archivo de audio a partir del cual se generará el tono DTMF.
+        output_file_name (str): Nombre del archivo WAV a guardar.
+
+    Returns:
+        None
+    """
     # Obtener las dos frecuencias de la DTMF
     frecuencias = obtener_frecuencias(archivo_wav)
     frecuencia1 = frecuencias[0]
@@ -113,11 +128,19 @@ def generar_tono_dtmf(archivo_wav, output_file_name):
     # Guardar el tono completo como un archivo WAV
     sf.write(output_file_name, tono_completo, samplerate)
 
+    print(f"Tono DTMF generado a partir de {archivo_wav} y guardado como {output_file_name}")
 
-def obtener_numero_presionado(archivo_wav):
-    import numpy as np
-    from scipy.io import wavfile
 
+def obtener_numero_presionado(archivo_wav: str):
+    """
+    Obtiene el número presionado en un teclado DTMF a partir de un archivo de audio.
+
+    Args:
+        archivo_wav (str): Nombre del archivo de audio.
+
+    Returns:
+        Union[str, None]: El número presionado en el teclado DTMF, o None si no se encontró un número.
+    """
     # Obtener las dos frecuencias del tono DTMF
     samplerate, data = wavfile.read(archivo_wav)
     frecuencias = np.array(obtener_frecuencias(archivo_wav))
@@ -157,10 +180,17 @@ def obtener_numero_presionado(archivo_wav):
     return None
 
 
-def analizar_audio_dtmf(archivo_audio, duracion_segmento):
-    import os
-    from scipy.io import wavfile
+def analizar_audio_dtmf(archivo_audio: str, duracion_segmento: float) -> None:
+    """
+    Analiza un archivo de audio en busca de tonos DTMF y muestra los números presionados en la consola.
 
+    Args:
+        archivo_audio (str): Nombre del archivo de audio a analizar.
+        duracion_segmento (float): Duración de cada segmento de tiempo en segundos.
+
+    Returns:
+        None
+    """
     # Crear la carpeta "temp" si no existe
     temp_folder = "temp"
     if not os.path.exists(temp_folder):
@@ -169,17 +199,6 @@ def analizar_audio_dtmf(archivo_audio, duracion_segmento):
     # Cargar el archivo de audio completo
     with open(archivo_audio, "rb") as file:
         samplerate, data = wavfile.read(file)
-
-
-
-    # Señal en el tiempo
-    # visualizar_audio(archivo_audio=archivo_audio)    
-
-    # Espectro
-    # visualizar_espectro(archivo_audio=archivo_audio)
-
-    # Definir la duración de cada segmento de tiempo en segundos
-    duracion_segmento = duracion_segmento
 
     # Dividir el archivo de audio en segmentos de tiempo y analizar cada uno
     numeros_presionados = []
@@ -200,7 +219,7 @@ def analizar_audio_dtmf(archivo_audio, duracion_segmento):
 
     # Imprimir los números que se presionaron en la consola
     if len(numeros_presionados) > 0:
-        print("Se presionaron los números:", ", ".join(numeros_presionados))
+        print("Se presionaron los números:", " - ".join(numeros_presionados))
     else:
         print("No se detectó ningún número DTMF en el archivo de audio.")
 
@@ -218,10 +237,16 @@ def analizar_audio_dtmf(archivo_audio, duracion_segmento):
         os.rmdir(temp_folder)
 
 
-def visualizar_espectro(archivo_audio):
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import librosa
+def visualizar_espectro(archivo_audio: str) -> None:
+    """
+    Carga un archivo de audio y muestra su espectro en frecuencia.
+
+    Args:
+        archivo_audio (str): Nombre del archivo de audio a cargar.
+
+    Returns:
+        None
+    """
     # Cargar el archivo de audio
     y, sr = librosa.load(archivo_audio)
 
@@ -233,22 +258,34 @@ def visualizar_espectro(archivo_audio):
 
     # Crear el gráfico del espectro en frecuencia
     plt.figure(figsize=(14, 5))
-    plt.plot(np.linspace(0, sr, len(Y_abs)), Y_abs)
+    plt.plot(
+        np.linspace(0, sr / 2, len(Y_abs) // 2),
+        Y_abs[: len(Y_abs) // 2],
+        label="Espectro en frecuencia",
+    )
     plt.xlabel("Frecuencia (Hz)")
     plt.ylabel("Amplitud")
-    plt.title("Espectro en frecuencia completo")
+    plt.title("Espectro en frecuencia de la señal de audio")
+    plt.grid()
+    plt.legend()
     plt.show()
 
 
-def visualizar_audio(archivo_audio):
-    import numpy as np
-    import matplotlib.pyplot as plt
-    from scipy.io.wavfile import read
+def visualizar_audio(archivo_audio: str) -> None:
+    """
+    Carga un archivo de audio y muestra su forma de onda en el tiempo.
 
-    file_audio=(archivo_audio)
-    fs,x=read(file_audio)
-    # filtrar solo los valores de amplitud mayores a 12k
-    time=np.arange(0,len(x)/fs,1.0/fs)    
+    Args:
+        archivo_audio (str): Nombre del archivo de audio a cargar.
+
+    Returns:
+        None
+    """
+    # Cargar el archivo de audio
+    fs, x = read(archivo_audio)
+
+    # Crear el vector de tiempo
+    time = np.arange(0, len(x) / fs, 1.0 / fs)
 
     # Graficar la forma de onda de audio
     plt.figure(figsize=(15, 5))
@@ -259,7 +296,6 @@ def visualizar_audio(archivo_audio):
     plt.grid()
     plt.show()
 
-if  __name__ == "__main__":
-    analizar_audio_dtmf("harold.wav", 1.4)
-    analizar_audio_dtmf("juanb.wav", 1.3)
-    analizar_audio_dtmf("all_tones.wav", 1.3)
+
+if __name__ == "__main__":
+    gui.GUI()
