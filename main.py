@@ -259,6 +259,7 @@ def visualizar_audio(archivo_audio):
     plt.grid()
     plt.show()
 
-analizar_audio_dtmf("harold.wav", 1.4)
-analizar_audio_dtmf("juanb.wav", 1.3)
-analizar_audio_dtmf("all_tones.wav", 1.3)
+if  __name__ == "__main__":
+    analizar_audio_dtmf("harold.wav", 1.4)
+    analizar_audio_dtmf("juanb.wav", 1.3)
+    analizar_audio_dtmf("all_tones.wav", 1.3)
